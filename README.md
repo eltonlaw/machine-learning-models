@@ -1,18 +1,6 @@
-Basic Machine Learning Algorithms
-=================================
-
-About
----------
-Basic implementations of machine learning algorithms. The dataset used is the original MNIST data prepared in sklearn.
-
-
-Notes
------------
-
-### Feed Forward Neural Net
-
-References:
-* http://www.deeplearningbook.org/contents/mlp.html
-* http://www.webpages.ttu.edu/dleverin/neural_network/neural_networks.html
-* http://deeplearning.stanford.edu/wiki/index.php/UFLDL_Tutorial
-* http://neuralnetworksanddeeplearning.com/chap2.html
+- StratifiedKFold: Prevents overfitting, more accurate, uses data more effectively. 
+- Activation function: Hyperbolic tangent(tanh)
+- Weights initialized uniformly over [-sqrt(6)/(sqrt((layer[i] length) + (layer[i+1] length))] as described in "Understanding the difficulty of training deep feedforward neural networks"(Bengio,Glorot,2010)
+- Biases initialized at 0
+- Find a different cost function
+- Output is the probability of being each number

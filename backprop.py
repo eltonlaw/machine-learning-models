@@ -1,92 +1,84 @@
-""" Feedforward Backpropogation Algorithm """
 import numpy as np
-from sklearn.metrics import mean_squared_error
-# Error Settings
-np.seterr(over="ignore") # To ignore the overflow error from calculating the sigmoid
 
-### DATA PROCESSING ###
-
+### DATA ###
 from sklearn.datasets import fetch_mldata
-from sklearn.cross_validation import train_test_split
-mnist = fetch_mldata('MNIST original') # Labeled Handwritten digits 0-9
-x_train,x_test,y_train,y_test = train_test_split(mnist.data,mnist.target,test_size=0.30,random_state=1)
+from sklearn.cross_validation import StratifiedKFold
+mnist = fetch_mldata("MNIST original")
+skf = StratifiedKFold(mnist.target,n_folds=10)
 
+################################################################################################################
+################################################################################################################
+################################################################################################################
 
-### NEURAL NET ###
-
-# Parameters
-batch_size = len(x_train) # 1 = Stochastic GD, 1<max = mini batch, max = batch
-layers = [len(x_train[0]),9,1] # 9 Output layers cause we are looking for the probability of it being each value
-biases = [np.random.randn(layer) for layer in layers[1:]] # We don't set biases for neurons in the input layer because biases are only ever used in computing the outputs from later layers
-weights = [np.random.randn(output_layer,input_layer) for input_layer,output_layer in zip(layers[:-1],layers[1:])] # Returns random weights for the all the layers except the last one
-alpha = 0.3 # Learning rate for gradient descent, controls the size of the step
-
-# Helper Functions
-def sigmoid(x):
-	return 1.0/(1+np.exp(-x))
-def sigmoid_derivative(x):
-	return sigmoid(x)*(1-sigmoid(x))
-def quadratic_cost(actual,predicted): # For one training example
-	return ((actual-predicted)**2)/float(2)
-def total_quadratic_cost(actual,predicted): # For all training examples
-	return (np.subtract(actual,predicted)**2)/float(2*len(x_train))
-def quadratic_cost_derivative(actual,predicted):
-	return (actual-predicted)
-
-# used for evaluation
-def forward_propogation(x_train,weights):
-	"""For each layer we do the dot product of the input vector and the weight vector then add the bias. The result of that is inputted into a sigmoid function. Returns a list containing the output from the final layer """
-	predictions = []# to get the same shape as x_train
-	for x in x_train:
-		A = x # x is the input layer for layer 1
-		for W,B in zip(weights,biases): # W = weights from layer l, B = bias from layer l+1
-			S = np.add(np.dot(A,np.transpose(W)),B)
-			A = sigmoid(S)
-		predictions.extend(A)
-	return predictions # This is a list which contains ten numbers representing the probabilities of each label [Pr(0),Pr(1),Pr(2)...Pr(8),Pr(9)]
-
-def backward_propogation(x,y,weights): 
-	# Initialize matrix of z's and matrix of activations
-	zs = [np.zeros(layer) for layer in layers]
-	activations = [np.zeros(layer) for layer in layers]
-	counter = 1
-	for x,y in zip(x,y):
-		print "TRAINING TRIAL:",counter
-		zs[0] = x # First z's is the input vector
-		activations[0]=sigmoid(x) 
-
-		a = sigmoid(x) # First activation is the input...Do you sigmoid the first activation?
-		# Feed Forward, calculates z and activation at every node
-		for w,b,i in zip(weights,biases,range(1,len(layers))): 
-			z = np. add(np.dot(a,np.transpose(w)),b)
-			zs[i]=z
-			a = sigmoid(z)
-			activations[i]=a
-		# Backward propogate, calcuates error at output node and uses the weights to calculate error at every other node
-		for layer in reversed(range(len(layers))): #for (n,n-1...2,1)
-			if layer == len(layers)-1:
-				errors = [np.zeros(layer) for layer in layers]
-				errors[-1] = quadratic_cost_derivative(activations[-1],y)*sigmoid_derivative(z[-1])
-			else:
-				errors[layer] =np.dot(errors[layer+1],weights[layer])*sigmoid_derivative(zs[layer]) # hadamard product
-
-		# Find gradient of Cost with respect to each weight
-		gradients = weights # To get the same dimensionality as the weights list
-		for l in range(len(layers)-1):
-			for k in range(layers[l]): # K is input layer
-				for j in range(layers[l+1]): # J is output layer
-					gradients[l][j][k] = activations[l][k]*errors[l+1][j]
-		# Change weights according to gradients [weights = weights - (learning rate * delta)]
-		weights = np.subtract(weights,np.multiply(gradients,alpha))
-		counter += 1
-		print weights
+def backpropogation(x_train,y_train):
+	# Loop through each datapoint
+		# Feedforward and calculate error between actual and predicted. 
+		# Use error at output node to calculate error at each individual node. 
+		# Use errors at individual nodes to calculate gradient of weight
+		# Subtract gradient*alpha from current weight
 	return weights
 
+### HELPER FUNCTIONS ###
+def tanh(x):
+	return np.math.tanh(x)
+def tanh_derivative(x):
+	return 1-np.math.pow(tanh(x),2)
+def n_i(j):
+	"""Normalized_initialization"""
+	bound = np.sqrt(6)/float(np.sqrt(layers[j]+layers[j+1]))
+	return [-bound,bound]
+def accuracy_score(predictions,actuals): 
+	""" Compares the predicted most probable value to the actual value and if they're equal, total_correct+=1. 
+	__predictions__: A list of lists. Contains the probabilities of the specific input actually being that value. Ex. predictions = [[0.145,0.2545,0.123,0.3432,0.12312,0.1231,0.123...],[...]...]
+	__actuals__: A list of values. Contains what value the input actually is. Ex. actuals = [0,1,3,1,4,6,9,5,7,6...]
+	"""
+	total = 0
+	total_correct = 0
+	for jj,prediction in enumerate(predictions): 
+		if prediction.index(max(prediction)) == actuals[jj]:
+			total_correct +=1
+		total +=1
+	print "CORRECT:",total_correct
+	print "TOTAL:",total
+	print "PERCENTAGE CORRECT:",total_correct/float(total)
+
+################################################################################################################
+################################################################################################################
+################################################################################################################
+
 if __name__ == "__main__":
-	trained_weights = backward_propogation(x_train,y_train,weights)
-	print "TRAINED WEIGHTS:",trained_weights
-	predictions = np.array(forward_propogation(x_test,trained_weights))
-	print "PREDICTED VALUES:",predictions
-	print "Trained Weights MSE:",mean_squared_error(y_test,predictions)
+	#Parameters
+	layers = [mnist.data.shape[1],3,len(set(mnist.target))] # Input layer is the matrix of pixels[28*28]. Output is the amount of unique y labels[0-9].
+	biases = [np.zeros(layer)  for layer in layers[1:]] 
+	weights = [np.random.uniform(low=n_i(j)[0],high=n_i(j)[1],size=(node_out,node_in))     for j,node_in,node_out in zip(range(len(layers)-1),layers[:-1],layers[1:])] # node_in and node_out are scalar values (784,3) and then (3,10)
+
+	current_fold = 1
+	scores = []
+	for train_index,test_index in skf:
+		print "FOLD:",current_fold
+		x_train,x_test = mnist.data[train_index],mnist.data[test_index]
+		y_train,y_test = mnist.target[train_index],mnist.data[test_index]
+
+		trained_weights = backpropogation(x_train,y_train)
+		predictions = feedforward(x_test,trained_weights)
+
+		scores.append(accuracy_score(predictions,y_test))
+		current_fold+=1
+	print "AVERAGE FINAL ACCURACY:",np.mean(scores)
+
+""" New changes to implement
+
+- StratifiedKFold
+- Weights initialized 
+- Biases initialized at 0
+- Find a different cost function
+- Output is the probability of being each number
+- Activation function: Hyperbolic tangent(tanh)
+- 
+
+"""
+
+
+
 
 
