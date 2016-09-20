@@ -31,12 +31,12 @@ def backward_prop(x_train,y_train,initial_weights,initial_biases):
 				zs[0] = x # First z's is the input vector
 				activations[0]=tanh(x) 
 				a = activations[0]	
-			else if i>0 and i <len(layers)-1: # For all hidden layers compute the z and activation
+			elif  (i>0 and i <len(layers)-1): # For all hidden layers compute the z and activation
 				z = np.add(np.dot(a,np.transpose(w)),b)
 				zs[i]=z
 				a = tanh(z)
 				activations[i]=a
-			else if i == len(layers)-1: # For the last layer use softmax
+			elif i == len(layers)-1: # For the last layer use softmax
 				z=np.add(np.dot(a,np.transpose(w)),b)
 				zs[i]=z
 				a=softmax(z) # For our final layer we want to output a probability
