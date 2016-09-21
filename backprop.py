@@ -24,37 +24,41 @@ def backward_prop(x_train,y_train,initial_weights,initial_biases):
 		x = np.array(x)
 		y = np.array(y)
 		print "TRAINING TRIAL:",counter
-
+		
+		# First layer, set input layer as the data and create activations from that
+		zs[0] = x # First z's is the input vector
+		activations[0]=tanh(x) 
+		a = activations[0]	
 		# Feed Forward, calculates z and activation at every node
-		for w,b,i in zip(weights,biases,range(0,len(layers))): 
-			if i == 0: # First layer, set input layer as the data and create activations from that
-				zs[0] = x # First z's is the input vector
-				activations[0]=tanh(x) 
-				a = activations[0]	
-			elif  (i>0 and i <len(layers)-1): # For all hidden layers compute the z and activation
+		for w,b,i in zip(weights,biases,range(1,len(layers))): 
+			if  i <len(layers)-1: # For all hidden layers compute the z and activation
 				z = np.add(np.dot(a,np.transpose(w)),b)
 				zs[i]=z
 				a = tanh(z)
 				activations[i]=a
-			elif i == len(layers)-1: # For the last layer use softmax
+			elif i == len(layers)-1: # For the last layer use 
 				z=np.add(np.dot(a,np.transpose(w)),b)
 				zs[i]=z
 				a=softmax(z) # For our final layer we want to output a probability
 				activations[i]=a
-	
+				predictions = activations[i]
+
 		# Backward propogate, calcuates error at output node and uses the weights to calculate error at every other node
 		for layer in reversed(range(len(layers))): #for (n,n-1...2,1)
 			if layer == len(layers)-1: # If this is the first layer, create the errors and set the first error layer
 				errors = [np.zeros(layer) for layer in layers]
-				errors[-1] = cost_derivative(activations[-1],y)*tanh_derivative(z[-1])
+				errors[-1] = cross_entropy(predictions,y,len(x_train))
 			else:
+				print errors[layer+1]
 				errors[layer] =np.dot(errors[layer+1],weights[layer])*tanh_derivative(zs[layer]) # hadamard product
-		
+
 		# Find the change in Cost attributable to a change in weight
 		gradients = weights # To get the same dimensionality as the weights list
 		for l in range(len(layers)-1):
 			for k in range(layers[l]): # K is input layer
 				for j in range(layers[l+1]): # J is output layer
+					print "activations[l][k]:",activations[l][k]
+					print "errors[l+1][j]:",errors[l+1]
 					gradients[l][j][k] = activations[l][k]*errors[l+1][j] #First term is partial derivative of cost with respect to weight, Second term is the regularization term
 		# Change weights according to gradients [weights = weights - (learning rate * delta)]
 		weights = np.subtract(weights,np.multiply(gradients,learning_rate))
@@ -75,16 +79,23 @@ def forward_propogation(x_train,weights,biases):
 def tanh(z):
 	return np.tanh(z)
 def tanh_derivative(z):
-	return 1-np.math.pow(tanh(z),2)
+	z = tanh(z)
+	if isinstance(z,int): # If it's an integer 
+		return 1-np.math.pow(z,2)
+	else: # If it's a list, enumerate through the list and apply square to each one
+		for z_i,i in enumerate(z):
+			z[i] = 1-np.math.pow(z_i,2)
+		return z
 def softmax(z):
 	e=np.exp(z-np.max(z))
 	return e/np.sum(e)
 def n_i(j):
-	"""Normalized_initialization"""
+	"""Normalized_initialization for randomized weights"""
 	bound = np.sqrt(6)/float(np.sqrt(layers[j]+layers[j+1]))
 	return [-bound,bound]
-def cross_entropy(y_pred,y):
-	cost = -(1/float(len(x_train))) 
+def cross_entropy(y_pred,y,length_of_training):
+	# Returns average cross entropy error of 1 set of data
+	cost=-np.log(y_pred[int(y)])/float(length_of_training)
 	return cost
 def accuracy_score(predictions,actuals): 
 	""" Compares the predicted most probable value to the actual value and if they're equal, total_correct+=1. 
@@ -126,6 +137,7 @@ if __name__ == "__main__":
 		scores.append(accuracy_score(predictions,y_test))
 		current_fold+=1
 	print "AVERAGE FINAL ACCURACY:",np.mean(scores)
+	
 
 """ New changes to implement
 
