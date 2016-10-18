@@ -15,4 +15,4 @@ Q Learning
 - http://mnemstudio.org/path-finding-q-learning-tutorial.htm
 
 Optical Character Recognition
-- 'An Expert System for general symbol recognition' by Maher Ahmed and Rabab Ward
+- https://scholar.google.ca/citations?view_op=view_citation&hl=en&user=qsJmtkMAAAAJ&citation_for_view=qsJmtkMAAAAJ:9yKSN-GCB0IC
