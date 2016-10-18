@@ -1,3 +1,5 @@
+!Notes
+
 Properties of 'backprop.py' implementation
 - StratifiedKFold: Prevents overfitting, more accurate, uses data more effectively. 
 - Activation function: Hyperbolic tangent(tanh)
@@ -6,7 +8,7 @@ Properties of 'backprop.py' implementation
 - Find a different cost function
 - Output is the probability of being each number
 
-Citations
+!Citations
 
 Q Learning
 - http://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf
