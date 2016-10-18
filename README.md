@@ -5,3 +5,7 @@ Properties of 'backprop.py' implementation
 - Biases initialized at 0
 - Find a different cost function
 - Output is the probability of being each number
+
+Q Learning
+- http://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf
+- http://mnemstudio.org/path-finding-q-learning-tutorial.htm
