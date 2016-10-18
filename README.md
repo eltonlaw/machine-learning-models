@@ -6,6 +6,11 @@ Properties of 'backprop.py' implementation
 - Find a different cost function
 - Output is the probability of being each number
 
+Citations
+
 Q Learning
 - http://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf
 - http://mnemstudio.org/path-finding-q-learning-tutorial.htm
+
+Optical Character Recognition
+- 'An Expert System for general symbol recognition' by Maher Ahmed and Rabab Ward
