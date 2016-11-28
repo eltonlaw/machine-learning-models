@@ -8,25 +8,25 @@ from matplotlib import pyplot as plt
 
 np.set_printoptions(threshold=10000000)
 
-			
+####################################################################
+def binarize(image):
+    val,binary_image = cv2.threshold(image,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # Otsu method to seperate foreground from background
+    cv2.imwrite("./binary_image.png",binary_image)
+    return binary_image
 ####################################################################
 ### Return symbols in a file
-# Otsu method to seperate foreground from background
 def get_symbols(image,write=False):
-	val = filters.threshold_otsu(image)
-	mask = image < val # boolean matrix 
-	all_labels = measure.label(mask)  
-	symbols_index = find_objects(all_labels)
-	symbols = []
-	if write == True:
-		for c,symbol_i in enumerate(symbols_index):
-				symbol = myImage[symbol_i]
-				symbols.append(symbol)
-				path = os.path.join("./output/symbols/"+str(c)+".jpg")
-				cv2.imwrite(path,symbol)
-	return symbols
-
-
+    boolean_matrix = image < 1
+    all_labels = measure.label(boolean_matrix)  
+    symbols_index = find_objects(all_labels)
+    symbols = []
+    if write == True:
+        for c,symbol_i in enumerate(symbols_index):
+            symbol = myImage[symbol_i]
+            symbols.append(symbol)
+            path = os.path.join("./output/symbols/"+str(c)+".jpg")
+            cv2.imwrite(path,symbol)
+    return symbols
 ####################################################################
 ### Count Number of Black Pixels in a symbol
 def count_blk_pixels(symbol):
@@ -47,7 +47,7 @@ def count_blk_pixels(symbol):
 
 ####################################################################
 ### Image Convolution(1) Row
-def img_conv1(image,ii):
+def img_conv1(image,ii,write=False):
     print "\n img_conv1()"
     new_image = np.empty(np.shape(image)) 
     convolution =[[0.2,0.2,0.2,0.2,0.2]]
@@ -58,13 +58,14 @@ def img_conv1(image,ii):
             column+=2
             new_image[row][column-2]=np.dot(convolution[0],padded_image[row][column-2:column+3])
     
-    output_path = "./output/convolution1/"+str(ii)+".jpg"
-    cv2.imwrite(output_path,new_image)
+    if write == True:
+        output_path = "./output/convolution1/"+str(ii)+".jpg"
+        cv2.imwrite(output_path,new_image)
 
     print "Convolution applied. Output of img_conv1() to path './output/convolution1/'"
     return new_image
 ### Image Convolution(2) Column
-def img_conv2(image,ii):
+def img_conv2(image,ii,write=False):
     print "\n img_conv2()"
     new_image = np.empty(np.shape(image)) 
     convolution =[[0.2],[0.2],[0.2],[0.2],[0.2]]
@@ -79,8 +80,9 @@ def img_conv2(image,ii):
             for a,b in zip(x_,convolution):
                             total+=a[0]*b[0]
             new_image[row-2][column]= total
-    output_path = "./output/convolution2/"+str(ii)+".jpg"
-    cv2.imwrite(output_path,new_image)
+    if write == True:
+        output_path = "./output/convolution2/"+str(ii)+".jpg"
+        cv2.imwrite(output_path,new_image)
     print "Convolution applied. Output of img_conv2() to path './output/convolution2/'"
     return new_image
 
@@ -95,18 +97,14 @@ def get_i_list(a,b):
     if (array[-1] !=b):
         array.append(b)
     return array
-
-def scale_image(image,ii,scale_size=(16,16)):
-
+def scale_image(image,ii,scale_size=(16,16),write=False):
     print "\n scale_image()"
-
     # Parameters
     original_img = image
     original_size = np.shape(original_img)
     scaled_img = np.ones(scale_size)
     ratio= ((np.shape(original_img)[0]-1)/float(scale_size[0]),(np.shape(original_img)[1]-1)/float(scale_size[1]))
     threshold = 0.2
-
     for i in range(scale_size[0]): # For 48 iterations
         x_0 = i* ratio[0]
         x_1 = (i+1) *ratio[0]-1
@@ -148,13 +146,23 @@ def scale_image(image,ii,scale_size=(16,16)):
                     scaled_img[i][j] = 0
                 else: 
                     scaled_img[i][j] = 255
-    output_path = "./output/scaled/"+str(ii)+".jpg"
-    cv2.imwrite(output_path,scaled_img)
+    if write == True:
+        output_path = "./output/scaled/"+str(ii)+".jpg"
+        cv2.imwrite(output_path,scaled_img)
     print "Image scaled to",scale_size,"output sent to path './output/scaled/'"
     return scaled_img
-
+# Edge Detector
+#symbola = cv2.imread("./output/symbols/0.jpg")
+#edges = cv2.Canny(symbol,100,200)
+#plt.subplot(121),plt.imshow(symbol,cmap = 'gray')
+#plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+#plt.subplot(122),plt.imshow(symbol,cmap = 'gray')
+#plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+#plt.savefig("original_edgeImage.png")
+#plt.clf()
 if __name__ =="__main__":
 	myImage= cv2.imread("./input.jpg",0) # 0 converts the image to greyscale
+        myImage = binarize(myImage)
 	print "Loaded image with properties..."
 	print "ROWS:",len(myImage) # 206
 	print "COLUMNS:",len(myImage[0]) # 253
@@ -164,6 +172,7 @@ if __name__ =="__main__":
 	print "NUMBER OF SYMBOLS:",len(symbols)
 	for ii,s in enumerate(symbols): 
             blk_pixel_positions,blk_pixel_count = count_blk_pixels(s)
-            convolution1=img_conv1(s,ii)
-            convolution2=img_conv2(s,ii)
-            scaled=scale_image(s,ii,scale_size=(32,32))
+            conv1 = img_conv1(s,ii,write=True)
+            conv2 = img_conv2(s,ii,write=True)
+            scaled = scale_image(s,ii,scale_size=(32,32),write=True)
+
