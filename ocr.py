@@ -14,6 +14,32 @@ def binarize(image):
     cv2.imwrite("./binary_image.png",binary_image)
     return binary_image
 ####################################################################
+def pad(image,ii,write=False):
+    """ Pad image so that it's dimensions are square """ 
+    shape = np.shape(image)
+    # Tuple of 2 lists with 255 elements to be appended/prepended 
+    final_dim = max(shape[0],shape[1])
+    req_p= abs(shape[0]-shape[1])
+    add = np.ones((req_p/2,final_dim))*255
+    if req_p % 2 == 0:
+        req_p_s = (add,add)    
+    else: 
+        req_p_s = (add,np.ones((req_p/2+1,final_dim))*255)
+        
+    if shape[0] > shape[1]: # Columns < Rows, add extra columns of whitespace
+        new_image = np.concatenate((np.transpose(req_p_s[0]),image),axis=1)
+        new_image = np.concatenate((new_image,np.transpose(req_p_s[1])),axis=1)
+    elif shape[1] > shape[0]:
+        new_image = np.concatenate((req_p_s[0],image),axis=0)
+        new_image = np.concatenate((new_image,req_p_s[1]),axis=0)
+    else: # No change necessary if dimensions are already equal
+        pass
+    if write == True:
+        output_path = "./output/symbols_pad/"+str(ii)+".png"
+        cv2.imwrite(output_path,new_image)
+    return  new_image
+    
+####################################################################
 ### Return symbols in a file
 def get_symbols(image,write=False):
     boolean_matrix = image < 1
@@ -151,15 +177,19 @@ def scale_image(image,ii,scale_size=(16,16),write=False):
         cv2.imwrite(output_path,scaled_img)
     print "Image scaled to",scale_size,"output sent to path './output/scaled/'"
     return scaled_img
+
+####################################################################
+###
 # Edge Detector
-#symbola = cv2.imread("./output/symbols/0.jpg")
-#edges = cv2.Canny(symbol,100,200)
-#plt.subplot(121),plt.imshow(symbol,cmap = 'gray')
-#plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-#plt.subplot(122),plt.imshow(symbol,cmap = 'gray')
-#plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-#plt.savefig("original_edgeImage.png")
-#plt.clf()
+symbol = cv2.imread("./output/symbols/0.jpg")
+edges = cv2.Canny(symbol,100,200)
+plt.subplot(121),plt.imshow(symbol,cmap = 'gray')
+plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(122),plt.imshow(symbol,cmap = 'gray')
+plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+plt.savefig("original_edgeImage.png")
+plt.clf()
+
 if __name__ =="__main__":
 	myImage= cv2.imread("./input.jpg",0) # 0 converts the image to greyscale
         myImage = binarize(myImage)
@@ -172,6 +202,7 @@ if __name__ =="__main__":
 	print "NUMBER OF SYMBOLS:",len(symbols)
 	for ii,s in enumerate(symbols): 
             blk_pixel_positions,blk_pixel_count = count_blk_pixels(s)
+            s = pad(s,ii,write=True)
             conv1 = img_conv1(s,ii,write=True)
             conv2 = img_conv2(s,ii,write=True)
             scaled = scale_image(s,ii,scale_size=(32,32),write=True)
