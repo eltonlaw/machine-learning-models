@@ -1,20 +1,20 @@
+# Feedforward with backprop
 import numpy as np
 
 ### SETTINGS ###
 np.random.seed(1)
 
 ### DATA ###
-from sklearn.datasets import fetch_mldata
-from sklearn.cross_validation import StratifiedKFold
-mnist = fetch_mldata("MNIST original")
-skf = StratifiedKFold(mnist.target,n_folds=10)
-
+def get_data(): 
+	from sklearn.datasets import fetch_mldata
+	mnist = fetch_mldata("MNIST original")
+	return mnist.data,mnist.target
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
 
 def backward_prop(x_train,y_train,initial_weights,initial_biases):
-	"""lnitialize matrix of z's and atrix of activations"""
+	# lnitialize matrix of z's/activations
 	weights = initial_weights
 	biases = initial_biases
 	zs = [np.zeros(layer) for layer in layers]
@@ -39,7 +39,7 @@ def backward_prop(x_train,y_train,initial_weights,initial_biases):
 			elif i == len(layers)-1: # For the last layer use 
 				z=np.add(np.dot(a,np.transpose(w)),b)
 				zs[i]=z
-				a=softmax(z) # For our final layer we want to output a probability
+				a=softmax(z) # Softmax final layer 
 				activations[i]=a
 				predictions = activations[i]
 
@@ -48,8 +48,9 @@ def backward_prop(x_train,y_train,initial_weights,initial_biases):
 			if layer == len(layers)-1: # If this is the first layer, create the errors and set the first error layer
 				errors = [np.zeros(layer) for layer in layers]
 				errors[-1] = cross_entropy(predictions,y,len(x_train))
+				print "errors:",errors
 			else:
-				print errors[layer+1]
+				print "errors[layer+1]:",errors[layer+1]
 				errors[layer] =np.dot(errors[layer+1],weights[layer])*tanh_derivative(zs[layer]) # hadamard product
 
 		# Find the change in Cost attributable to a change in weight
@@ -83,8 +84,8 @@ def tanh_derivative(z):
 	if isinstance(z,int): # If it's an integer 
 		return 1-np.math.pow(z,2)
 	else: # If it's a list, enumerate through the list and apply square to each one
-		for z_i,i in enumerate(z):
-			z[i] = 1-np.math.pow(z_i,2)
+		for i,z_i in enumerate(z):
+				z[i] = 1-np.math.pow(z_i,2)
 		return z
 def softmax(z):
 	e=np.exp(z-np.max(z))
@@ -95,6 +96,7 @@ def n_i(j):
 	return [-bound,bound]
 def cross_entropy(y_pred,y,length_of_training):
 	# Returns average cross entropy error of 1 set of data
+	print y_pred
 	cost=-np.log(y_pred[int(y)])/float(length_of_training)
 	return cost
 def accuracy_score(predictions,actuals): 
@@ -118,18 +120,29 @@ def accuracy_score(predictions,actuals):
 
 if __name__ == "__main__":
 	#Parameters
-	layers = [mnist.data.shape[1],3,len(set(mnist.target))] # Input layer is the matrix of pixels[28*28]. Output is the amount of unique y labels[0-9].
+	#data,labels = get_data()
+	# layers = [mnist.data.shape[1],3,len(set(mnist.target))] # Input layer is the matrix of pixels[28*28]. Output is the amount of unique y labels[0-9].
+	layers = [2,5,3]
+	data = np.random.randn(700,2)
+	labels = np.random.randint(0,high=9,size=(700,))
+	print "data[:3]:",data[:3] 
+	print "labels[:3]:",labels[:3]
+
 	initial_biases = [np.zeros(layer)  for layer in layers[1:]] 
 	initial_weights = [np.random.uniform(low=n_i(j)[0],high=n_i(j)[1],size=(node_out,node_in))     for j,node_in,node_out in zip(range(len(layers)-1),layers[:-1],layers[1:])] # node_in and node_out are scalar values (784,3) and then (3,10)
+	print "np.shape(initial_weights):",np.shape(initial_weights)
+	print "np.shape(initial_biases):",np.shape(initial_biases)
 	learning_rate = 0.3 # Initial learning rate 
 
+
+	from sklearn.cross_validation import StratifiedKFold
+	skf = StratifiedKFold(labels,n_folds=3)
 	current_fold = 1
 	scores = []
-
 	for train_index,test_index in skf:
 		print "FOLD:",current_fold
-		x_train,x_test = mnist.data[train_index],mnist.data[test_index]
-		y_train,y_test = mnist.target[train_index],mnist.data[test_index]
+		x_train,x_test =data[train_index],data[test_index]
+		y_train,y_test =labels[train_index],data[test_index]
 
 		trained_weights = backward_prop(x_train,y_train,initial_weights,initial_biases)
 		predictions = forward_prop(x_test,trained_weights)
@@ -138,20 +151,4 @@ if __name__ == "__main__":
 		current_fold+=1
 	print "AVERAGE FINAL ACCURACY:",np.mean(scores)
 	
-
-""" New changes to implement
-
-- StratifiedKFold
-- Weights initialized 
-- Biases initialized at 0
-- Find a different cost function
-- Output is the probability of being each number
-- Activation function: Hyperbolic tangent(tanh)
-- 
-
-"""
-
-
-
-
 

@@ -17,6 +17,7 @@ def update(self, t):
 
 		if random.random() > self.epsilon: #Probability of 1-self.epsilon of Exploitation
 			action = max(self.q_table[self.state], key=self.q_table[self.state].get) # The key(one of the actions) taken from the maximum q_value value(reward) is the action we will take when exploiting
+
 		else: # Exploration - If random number less than probability of exploration. Select a random action
 			random_int = int(math.floor(random.random()*len(self.valid_actions))) #random_int = 0,1,2 or 3
 			action = self.valid_actions[random_int]
@@ -37,4 +38,5 @@ def update(self, t):
 		next_state_actions = self.q_table[next_state] # State you land in from taking the action, should return a dictionary with 4 key-values(the 4 available actions you can take in this next state)
 		optimal_future_reward = max(next_state_actions.values()) #Finds the max q value for the next state
 
-		self.q_table[self.state][action] = (1-self.alpha)*self.q_table[self.state][action] + self.alpha * (reward + self.gamma * optimal_future_reward)
+		self.q_table[self.state][action] = (2-self.alpha)*self.q_table[self.state][action] + self.alpha * (reward + self.gamma * optimal_future_reward)
+
