@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np 
 import cv2 
 from time import sleep
 from skimage import filters,measure
@@ -16,7 +16,6 @@ def binarize(image):
 ####################################################################
 def pad(image,ii,write=False):
     """ Pad image so that it's dimensions are square """ 
-    shape = np.shape(image)
     # Tuple of 2 lists with 255 elements to be appended/prepended 
     final_dim = max(shape[0],shape[1])
     req_p= abs(shape[0]-shape[1])
@@ -25,7 +24,7 @@ def pad(image,ii,write=False):
         req_p_s = (add,add)    
     else: 
         req_p_s = (add,np.ones((req_p/2+1,final_dim))*255)
-        
+
     if shape[0] > shape[1]: # Columns < Rows, add extra columns of whitespace
         new_image = np.concatenate((np.transpose(req_p_s[0]),image),axis=1)
         new_image = np.concatenate((new_image,np.transpose(req_p_s[1])),axis=1)
@@ -33,16 +32,20 @@ def pad(image,ii,write=False):
         new_image = np.concatenate((req_p_s[0],image),axis=0)
         new_image = np.concatenate((new_image,req_p_s[1]),axis=0)
     else: # No change necessary if dimensions are already equal
-        pass
+        print "passed"
+        return image
+    
     if write == True:
         output_path = "./output/symbols_pad/"+str(ii)+".png"
         cv2.imwrite(output_path,new_image)
-    return  new_image
-    
+    return new_image
 ####################################################################
 ### Return symbols in a file
 def get_symbols(image,write=False):
-    boolean_matrix = image < 1
+    image = myImage
+    otsu_th = filters.threshold_otsu(image)
+    boolean_matrix = image < otsu_th
+    #boolean_matrix = image < 1
     all_labels = measure.label(boolean_matrix)  
     symbols_index = find_objects(all_labels)
     symbols = []
@@ -57,7 +60,6 @@ def get_symbols(image,write=False):
 ### Count Number of Black Pixels in a symbol
 def count_blk_pixels(symbol):
     print "\n count_blk_pixels()"
-    cv2.imwrite("./output/symbol.jpg",symbol)
     blk_pixel_count = 0 
     blk_pixel_positions = []
     for row,__ in enumerate(symbol):
@@ -73,12 +75,12 @@ def count_blk_pixels(symbol):
 
 ####################################################################
 ### Image Convolution(1) Row
-def img_conv1(image,ii,write=False):
-    print "\n img_conv1()"
+def conv1(image,ii,write=False):
+    print "\n conv1()"
     new_image = np.empty(np.shape(image)) 
     convolution =[[0.2,0.2,0.2,0.2,0.2]]
 
-    padded_image=np.pad(image,((0,0),(2,2)),"constant",constant_values=0)
+    padded_image=np.pad(image,((0,0),(2,2)),"constant",constant_values=255)
     for row,x in enumerate(image):
         for column,y in enumerate(image[row]):
             column+=2
@@ -88,15 +90,15 @@ def img_conv1(image,ii,write=False):
         output_path = "./output/convolution1/"+str(ii)+".jpg"
         cv2.imwrite(output_path,new_image)
 
-    print "Convolution applied. Output of img_conv1() to path './output/convolution1/'"
-    return new_image
+    print "Convolution applied. Output of conv1() to path './output/convolution1/'"
+    return new_image.astype("uint8")
 ### Image Convolution(2) Column
-def img_conv2(image,ii,write=False):
-    print "\n img_conv2()"
+def conv2(image,ii,write=False):
+    print "\n conv2()"
     new_image = np.empty(np.shape(image)) 
     convolution =[[0.2],[0.2],[0.2],[0.2],[0.2]]
 
-    padded_image=np.pad(image,((2,2),(0,0)),"constant",constant_values=0)
+    padded_image=np.pad(image,((2,2),(0,0)),"constant",constant_values=255)
     for row,x in enumerate(image):
         row+=2
         for column,y in enumerate(image[row-2]):
@@ -109,8 +111,8 @@ def img_conv2(image,ii,write=False):
     if write == True:
         output_path = "./output/convolution2/"+str(ii)+".jpg"
         cv2.imwrite(output_path,new_image)
-    print "Convolution applied. Output of img_conv2() to path './output/convolution2/'"
-    return new_image
+    print "Convolution applied. Output of conv2() to path './output/convolution2/'"
+    return new_image.astype("uint8")
 
 ####################################################################
 ### Scale Image
@@ -123,8 +125,8 @@ def get_i_list(a,b):
     if (array[-1] !=b):
         array.append(b)
     return array
-def scale_image(image,ii,scale_size=(16,16),write=False):
-    print "\n scale_image()"
+def scale(image,ii,scale_size=(16,16),write=False):
+    print "\n scale()"
     # Parameters
     original_img = image
     original_size = np.shape(original_img)
@@ -180,19 +182,145 @@ def scale_image(image,ii,scale_size=(16,16),write=False):
 
 ####################################################################
 ###
+def round_45(angle):
+    """ Round to 0,45,90,135"""
+    if angle < 22.5:
+        return 0
+    elif angle < 67.5:
+        return 45 
+    elif angle < 112.5:
+        return 90
+    else:
+        return 135
+
+def get_neighbours(x,y,img):
+    return [[img[x-1][y-1],img[x][y-1],img[x+1][y-1]],
+            [img[x-1][y],img[x][y],img[x+1][y]],
+            [img[x-1][y+1],img[x][y+1],img[x+1][y+1]]]
+def non_max_suppression(magnitude,direction,image,neighbours):
+    """At every pixel,pixel is checked if it is a local max in it's neighbourhood in the direction of gradient"""
+    if direction == 0:
+        n_left,n_right = neighbours[0][1],neighbours[2][1]
+    elif direction == 45:
+        n_left,n_right = neighbours[2][0],neighbours[0][2]
+    elif direction == 90:
+        n_left,n_right = neighbours[1][0],neighbours[1][2]
+    elif direction == 135:
+        n_left,n_right = neighbours[0][0],neighbours[2][2]
+
+    if (n_left and n_right) < magnitude:
+        return magnitude
+    else: 
+        return 0
+def hysteresis_thresholding(minVal,maxVal,image):
+    image=np.pad(image,((1,1),(1,1)),"constant",constant_values=0)
+    for i,x in enumerate(image[1:-1,1:-1]):
+        for j,y in enumerate(image[1:-1,1:-1][i]):
+            if image[i][j] > maxVal:
+                image[i][j] = 255
+            elif image[i][j] < minVal:
+                image[i][j] = 0
+            else:
+                if (image[i+1][j] or image[i-1][j] or image[i][j+1] or image[i][j-1]) > maxVal:
+                    image[i][j] = 128
+    return image
+
+
 # Edge Detector
-symbol = cv2.imread("./output/symbols/0.jpg")
-edges = cv2.Canny(symbol,100,200)
-plt.subplot(121),plt.imshow(symbol,cmap = 'gray')
-plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-plt.subplot(122),plt.imshow(symbol,cmap = 'gray')
-plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-plt.savefig("original_edgeImage.png")
-plt.clf()
+def edge_detector(image,ii,write=False):
+    print "\n edge_detector()"
+    image=np.pad(image,((1,1),(1,1)),"constant",constant_values=0)
+    temp_img = np.copy(image)
+    x_mask = [[-1,0,1],[-2,0,2],[-1,0,1]]
+    y_mask = [[-1,-2,-1],[0,0,0],[1,2,1]]
+    for i,x in enumerate(image[1:-1,1:-1]):
+        for j,y in enumerate(image[1:-1,1:-1][i]):
+            ns = get_neighbours(i,j,image)
+            g_x = np.sum(np.multiply(x_mask,ns))
+            if g_x == 0: g_x = 0.001
+            g_y = np.sum(np.multiply(y_mask,ns))
+            G = np.sqrt(np.square(g_x) + np.square(g_y))
+            theta = round_45(np.arctan(float(g_y)/g_x))
+            temp_img[i+1][j+1] = non_max_suppression(G,theta,image,ns)
+    edges_img = hysteresis_thresholding(100,200,temp_img)
+    if write == True:
+        output_path = "./output/edges/"+str(ii)+".jpg"
+        cv2.imwrite(output_path,edges_img)
+
+    return edges_img
+
+####################################################################
+## Thinning an image
+def neighbours(x,y,image):
+    P2 = image[x-1][y]
+    P3 = image[x-1][y+1]
+    P4 = image[x][y+1]
+    P5 = image[x+1][y+1]
+    P6 = image[x+1][y]
+    P7 = image[x+1][y-1]
+    P8 = image[x][y-1]
+    P9 = image[x-1][y-1]
+    return [P2,P3,P4,P5,P6,P7,P8,P9]
+def n_transitions(neighbours):
+    """  the number of transitions from white to black, (0 -> 1) in the sequence P2,P3,P4,P5,P6,P7,P8,P9,P2. (Note the extra P2 at the end - it is circular)."""
+    n_transitions = 0 
+    for i_0,i_1 in zip(neighbours,(neighbours+[neighbours[0]])[1:]):
+        if i_0 == 0 and i_1 == 255:
+            n_transitions +=1
+    return n_transitions
+def n_black(neighbours):
+    return neighbours.count(0)
+def thin(image,ii,write=False):
+    print "\n thin()"
+    changed = True
+    shape = (np.shape(image)[0] + 2,np.shape(image)[1]+2)
+    thinned_image = np.ones(shape)*255
+    thinned_image[1:-1,1:-1] = image
+    total_runs = 0
+    # First Pass
+    while changed == True:
+        c = 0
+        changes1,changes2 = [],[]
+        for i,x in enumerate(thinned_image[1:-1,1:-1]):
+            for j,y in enumerate(thinned_image[1:-1,1:-1][i]):
+                ns = neighbours(i+1,j+1,thinned_image)
+                P2,P3,P4,P5,P6,P7,P8,P9 = ns 
+                if ((thinned_image[i+1][j+1] == 0) and (n_transitions(ns) == 1) and (2 <= n_black(ns) and n_black(ns) <= 6) and ((P2 or P4 or P6) == 255) and ((P4 or P6 or P8) == 255)):
+                    changes1.append((i+1,j+1))
+                    c+=1
+        # Simultaneous update
+        print "changes1:",changes1
+        for i,j in changes1:
+            thinned_image[i][j] = 255
+        # Second Pass
+        for i,x in enumerate(thinned_image[1:-1,1:-1]):
+            for j,y in enumerate(thinned_image[1:-1,1:-1][i]):
+                ns = neighbours(i+1,j+1,thinned_image)
+                P2,P3,P4,P5,P6,P7,P8,P9 = ns 
+                if ((thinned_image[i+1][j+1] == 0)and (n_transitions(ns) == 1) and (2 <= n_black(ns) and n_black(ns) <= 6) and ((P2 or P4 or P8) == 255) and ((P2 or P6 or P8) == 255)):
+                    changes2.append((i+1,j+1))
+                    c+=1
+        # Simultaneous update
+        print "changes2:",changes2
+        for i,j in changes2:
+            thinned_image[i][j] = 255
+        if c > 0:
+            total_runs +=1
+            continue
+        else:
+            changed = False
+        print "c:",c
+    if write == True:
+        output_path = "./output/thinned/"+str(ii)+".jpg"
+        cv2.imwrite(output_path,thinned_image)
+    print "Image thinned: Ran",total_runs,"passes" 
+    return thinned_image
 
 if __name__ =="__main__":
 	myImage= cv2.imread("./input.jpg",0) # 0 converts the image to greyscale
-        myImage = binarize(myImage)
+        np.shape(myImage)
+        myImage2 = myImage[1:-1,1:-1]
+        #myImage = binarize(myImage)
 	print "Loaded image with properties..."
 	print "ROWS:",len(myImage) # 206
 	print "COLUMNS:",len(myImage[0]) # 253
@@ -200,10 +328,13 @@ if __name__ =="__main__":
 	output_path = "./output/symbols"
 	symbols = [cv2.imread(os.path.join(output_path,img),0) for img in os.listdir(output_path)]	
 	print "NUMBER OF SYMBOLS:",len(symbols)
-	for ii,s in enumerate(symbols): 
-            blk_pixel_positions,blk_pixel_count = count_blk_pixels(s)
-            s = pad(s,ii,write=True)
-            conv1 = img_conv1(s,ii,write=True)
-            conv2 = img_conv2(s,ii,write=True)
-            scaled = scale_image(s,ii,scale_size=(32,32),write=True)
+        for ii,img in enumerate(symbols): 
+            blk_pixel_positions,blk_pixel_count = count_blk_pixels(img)
+            #padded_img = pad(img,ii,write=True)
+            conv1_img = conv1(img,ii,write=True)
+            conv2_img = conv2(conv1_img,ii,write=True)
+            binary_img = binarize(conv2_img)
+            scaled_img = scale(binary_img,ii,scale_size=(32,32),write=True)
+            edges = edge_detector(scaled_img,ii,write=True)
+            thin_img = thin(scaled_img,ii,write=True)
 
