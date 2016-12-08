@@ -10,11 +10,6 @@ np.random.seed(2)
 np.set_printoptions(threshold=10000000)
 
 ####################################################################
-def get_mnist():
-    from sklearn.datasets import fetch_mldata
-    mnist = fetch_mldata("MNIST original")
-    return mnist.data,mnist.target
-####################################################################
 def binarize(image):
     val,binary_image = cv2.threshold(image,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # Otsu method to seperate foreground from background
     cv2.imwrite("./binary_image.png",binary_image)
@@ -64,19 +59,23 @@ def get_symbols(image,write=False):
     return symbols
 ####################################################################
 ### Count Number of Black Pixels in a symbol
-def count_blk_pixels(image):
-    print "\n count_blk_pixels()"
-    blk_pixel_count = 0 
-    blk_pixel_positions = []
+def count_pixels(image):
+    pixels = {}
+    n_black= 0 
+    b_positions = []
     for row,__ in enumerate(image):
         for column,_ in enumerate(image[row]):
             if image[row][column] == 0: 
-                blk_pixel_positions.append((row,column))
-                blk_pixel_count +=1
-    print "Total pixels:",len(image[0])*len(image[0])
-    print "# of black pixels:",blk_pixel_count
-    print "% of black pixels:",float(blk_pixel_count)/(len(image[0])*len(image[0])) 
-    return blk_pixel_count
+                b_positions.append((row,column))
+                n_black+=1
+#    print "Total pixels:",len(image[0])*len(image[0])
+#    print "# of black pixels:",blk_pixel_count
+#    print "% of black pixels:",float(blk_pixel_count)/(len(image[0])*len(image[0])) 
+    n_total = len(image[0])*len(image[0])
+    n_white = n_total - n_black
+    bw_ratio = np.around(n_black/float(n_white),decimals=4)
+    pixels = {"n_black":n_black,"n_white":n_white,"n_total":n_total,"bw_ratio":bw_ratio,"b_positions":b_positions}
+    return pixels
 
 ####################################################################
 ### Image Convolution(1) Row
@@ -357,7 +356,10 @@ def get_feature_vector(image,ii,write=False):
             feature_vector.append(image[x_0:x_1,y_0:y_1])
     n = 1
     for feature in feature_vector:
+        p = count_pixels(feature)
         plt.subplot(3,3,n)
+        subplot_title = str(p["n_black"])+"b - "+str(p["n_white"])+"w = "+str(p["bw_ratio"])+"%"
+        plt.title(subplot_title,fontsize = 8)
         plt.axis("off")
         plt.imshow(feature,cmap=plt.cm.binary)
         n+=1
@@ -368,9 +370,12 @@ def get_feature_vector(image,ii,write=False):
     print "Image split into features"
     return feature_vector
 
-def euclidean_distance(A,B):
-    return np.linalg.norm(np.array(A)-np.array(B))
 
+####################################################################
+## Store descriptions and predict using stored descriptions
+def euclidean_distance(A,B):
+    """Inputs are two same-size matrixes, return a scalar value """
+    return np.linalg.norm(np.array(A)-np.array(B))
 class FeatureDescriptions():
     def __init__(self):
         self.features = {"0":[],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[],"7":[],"8":[],"9":[]}
@@ -379,10 +384,6 @@ class FeatureDescriptions():
         print "FD:Adding to label...",label
         self.features[str(label)].append(feature)
         return None
-    def euclidean_distance(feature_vector,unknown_symbol):
-        """Inputs are two same-size matrixes, return a scalar value """
-        distance = np.linalg.norm(A-B)
-        return distance
     def transform(self,symbol):
         symbol = transform_split(symbol)
         return symbol
@@ -396,7 +397,6 @@ class FeatureDescriptions():
                     distances[i] = distance
         #prediction = np.argmin(distances) # Return index of the prediction with the lowest distance
         return distances
-
 
 ####################################################################
 ## Transform and Split
@@ -415,7 +415,6 @@ def transform_split(image,write_out=False):
 
 if __name__ =="__main__":
     myImage= cv2.imread("./input.jpg",0) # 0 converts the image to greyscale
-    #myImage = binarize(myImage)
     print "Loaded image with properties..."
     print "ROWS:",len(myImage) # 206
     print "COLUMNS:",len(myImage[0]) # 253
@@ -428,7 +427,7 @@ if __name__ =="__main__":
     feature_label_pairs = []
     for ii,img in enumerate(symbols): 
         print "\n ====== SYMBOL:",ii," ================================================"
-        blk_pixel_count = count_blk_pixels(img)
+        #pixels = count_pixels(img)
         feature = transform_split(img,write_out=True)
         feature_label_pairs.append((feature,labels[ii]))
 
@@ -447,7 +446,7 @@ if __name__ =="__main__":
         distances = fd.predict(feature)
         prediction = np.argmin(distances)
         print "Distances array:",distances
-        print "Prediction,Label:",prediction,label
+        print "Prediction,Target:",prediction,label
         if prediction == label:
             score +=1.0
     print "FINISHED =================="
