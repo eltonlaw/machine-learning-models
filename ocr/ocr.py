@@ -6,8 +6,14 @@ from scipy.ndimage.measurements import find_objects
 import os
 from matplotlib import pyplot as plt
 
+np.random.seed(2)
 np.set_printoptions(threshold=10000000)
 
+####################################################################
+def get_mnist():
+    from sklearn.datasets import fetch_mldata
+    mnist = fetch_mldata("MNIST original")
+    return mnist.data,mnist.target
 ####################################################################
 def binarize(image):
     val,binary_image = cv2.threshold(image,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # Otsu method to seperate foreground from background
@@ -67,7 +73,6 @@ def count_blk_pixels(image):
             if image[row][column] == 0: 
                 blk_pixel_positions.append((row,column))
                 blk_pixel_count +=1
-    print "Row/Column tuple of black pixels:",blk_pixel_positions
     print "Total pixels:",len(image[0])*len(image[0])
     print "# of black pixels:",blk_pixel_count
     print "% of black pixels:",float(blk_pixel_count)/(len(image[0])*len(image[0])) 
@@ -339,19 +344,19 @@ def thin(image,ii,write=False):
     return image
 ####################################################################
 ## Split image into 3x3 feature vector
-def feature_vector(image,ii,write=False):
-    print "get_feature_vector()"
+def get_feature_vector(image,ii,write=False):
+    print "\n get_feature_vector()"
     d0 = 0
     d1 = len(image)/3
     d2 = len(image)/3 * 2
     d3 = len(image) - 1
     dividers = [(d0,d1),(d1,d2),(d2,d3)] # Since each image is n x n, we only need to find the 1/3 markers for one side to get the other side as well
-    features= []
+    feature_vector = []
     for x_0,x_1 in dividers:
         for y_0,y_1 in dividers:
-            features.append(image[x_0:x_1,y_0:y_1])
+            feature_vector.append(image[x_0:x_1,y_0:y_1])
     n = 1
-    for feature in features:
+    for feature in feature_vector:
         plt.subplot(3,3,n)
         plt.axis("off")
         plt.imshow(feature,cmap=plt.cm.binary)
@@ -361,63 +366,90 @@ def feature_vector(image,ii,write=False):
         plt.savefig(output_path)
         plt.clf()
     print "Image split into features"
-    return features
+    return feature_vector
+
+def euclidean_distance(A,B):
+    return np.linalg.norm(np.array(A)-np.array(B))
 
 class FeatureDescriptions():
     def __init__(self):
         self.features = {"0":[],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[],"7":[],"8":[],"9":[]}
     def add(self,label,feature):
         """Add a feature vector to the array """
+        print "FD:Adding to label...",label
         self.features[str(label)].append(feature)
         return None
     def euclidean_distance(feature_vector,unknown_symbol):
-        """Inputs are two 3x3x11x11 matrixes, return a scalar value """
+        """Inputs are two same-size matrixes, return a scalar value """
+        distance = np.linalg.norm(A-B)
         return distance
+    def transform(self,symbol):
+        symbol = transform_split(symbol)
+        return symbol
     def predict(self,symbol):
-        distance = np.ones(len(self.features))*10000 # Distance initialized at 10000 for all symbol-feature pairs)
+        """ Predict an already transformed symbol """
+        distances = np.ones(len(self.features))*10000 # Distance initialized at 10000 for all symbol-feature pairs)
         for i,feature in enumerate(self.features):
             for feature_i in self.features[str(i)]:
                 distance = euclidean_distance(feature_i,symbol)
-                if distance < distance[i]: # If a feature vector is found for a number that's closer than before then assign that distance to be the new max distance
-                    distance[i] = distance
-        prediction = np.argmin(distance) # Return index of the prediction with the lowest distance
-        return prediction
-
-
+                if distance < distances[i]: # If a feature vector is found for a number that's closer than before then assign that distance to be the new max distance
+                    distances[i] = distance
+        #prediction = np.argmin(distances) # Return index of the prediction with the lowest distance
+        return distances
 
 
 ####################################################################
 ## Transform and Split
-def transform_split(image):
+def transform_split(image,write_out=False):
     #padded_img = pad(image,ii,write=True)
-    conv1_img = conv1(image,ii,write=True)
-    conv2_img = conv2(conv1_img,ii,write=True)
+    conv1_img = conv1(image,ii,write=write_out)
+    conv2_img = conv2(conv1_img,ii,write=write_out)
     binary_img = binarize(conv2_img)
-    scaled_img = scale(binary_img,ii,scale_size=(32,32),write=True)
-    edges = edge_detector(scaled_img,ii,write=True)
-    thinned_img = thin(scaled_img,ii,write=True)
-    feature = feature_vector(thinned_img,ii,write=True)
-    return feature
+    scaled_img = scale(binary_img,ii,scale_size=(32,32),write=write_out)
+    edges = edge_detector(scaled_img,ii,write=write_out)
+    thinned_img = thin(scaled_img,ii,write=write_out)
+    feature_vector = get_feature_vector(thinned_img,ii,write=write_out)
+    return feature_vector
 
 ####################################################################
 
 if __name__ =="__main__":
-	myImage= cv2.imread("./input.jpg",0) # 0 converts the image to greyscale
-        #myImage = binarize(myImage)
-	print "Loaded image with dproperties..."
-	print "ROWS:",len(myImage) # 206
-	print "COLUMNS:",len(myImage[0]) # 253
-	symbols = get_symbols(myImage,write=False)
-	output_path = "./output/symbols/"
-        symbols = [cv2.imread(os.path.join(output_path,img),0) for img in os.listdir(output_path)][1:]	
-	print "NUMBER OF SYMBOLS:",len(symbols)
-        labels = [2,1,0,6,0,1,5,3,0,4,9,9,0,7,6,6,0,1,5,4,0,4,9,1,7,2,2,1,1,3,4,1,3,7,4,7,2,1,2,3,1,5,4,4,4,1,7,4,9,7,9]
-        fd = FeatureDescriptions()
-        for ii,img in enumerate(symbols): 
-            print "\n ====== SYMBOL:",ii," ================================================"
-            blk_pixel_count = count_blk_pixels(img)
-            feature = transform_split(img)
-            fd.add(labels[ii],feature)
-        predictions = fd.predict()
+    myImage= cv2.imread("./input.jpg",0) # 0 converts the image to greyscale
+    #myImage = binarize(myImage)
+    print "Loaded image with properties..."
+    print "ROWS:",len(myImage) # 206
+    print "COLUMNS:",len(myImage[0]) # 253
+    symbols = get_symbols(myImage,write=False)
+    output_path = "./output/symbols/"
+    symbols = [cv2.imread(os.path.join(output_path,img),0) for img in os.listdir(output_path)][1:]	
+    print "NUMBER OF SYMBOLS:",len(symbols)
+    labels = [2,1,0,6,0,1,5,3,0,4,9,9,0,7,6,6,0,1,5,4,0,4,9,1,7,2,2,1,1,3,4,1,3,7,4,7,2,1,2,3,1,5,4,4,4,1,7,4,9,7,9]
+    fd = FeatureDescriptions()
+    feature_label_pairs = []
+    for ii,img in enumerate(symbols): 
+        print "\n ====== SYMBOL:",ii," ================================================"
+        blk_pixel_count = count_blk_pixels(img)
+        feature = transform_split(img,write_out=True)
+        feature_label_pairs.append((feature,labels[ii]))
 
-
+    np.random.shuffle(feature_label_pairs)
+    split = int(0.7*(len(feature_label_pairs)))
+    print "Train/Test Split:",split
+    # Train Set
+    for feature,label in feature_label_pairs[:split]:
+        fd.add(label,feature)
+    for i in range(10):
+        print i,len(fd.features[str(i)])
+    # Test Set
+    score,total = 0.0,0.0
+    for feature,label in feature_label_pairs[split:]:
+        total +=1.0
+        distances = fd.predict(feature)
+        prediction = np.argmin(distances)
+        print "Distances array:",distances
+        print "Prediction,Label:",prediction,label
+        if prediction == label:
+            score +=1.0
+    print "FINISHED =================="
+    print "Model Accuracy:",score/total
+            
