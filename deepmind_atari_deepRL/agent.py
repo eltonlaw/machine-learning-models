@@ -1,26 +1,25 @@
-import environment
-import numpy as np
-
-q = np.empty((n_states,n_actions))
-valid_actions = env.get_valid_actions()
-
-for t in range(1000):
-    """ 
-    State_t -> Action_t -> (Reward_t , State_t+1) ->...
-    """
-    alpha = 1/t # Learning Rate
-    gamma = 1/t # Discount
-    epsilon = 1/t # Probability of Exploration
-
-    state = env.get_current_state()
-
-    if np.random.rand() > epsilon:
+class Agent:
+    def __init__(self,valid_states,valid_actions):
+        self.valid_states = valid_states
+        self.valid_actions = valid_actions
+        self.Q = np.zeros(len(valid_states),len(valid_actions))
+    def get_action(self,state,t):
+        self.epsilon = 1/t # Probability of Exploration
         # Exploitation
-        action = max(q[current_state])
-    else: 
+        if np.random.rand() > self.epsilon:
+            action = max(Q[current_state])
         # Exploration
-        ii = np.randomint(0,high=len(valid_actions))
-        action =  random_valid_action[ii]
-
+        else: 
+            ii = np.randomint(0,high=len(self.valid_actions))
+            action =  self.valid_actions[ii]
+        return action
+    def update(self,state,action,t):
+        ## All three values should slowly decrease after each episode
+        self.alpha = 1/t # Learning Rate
+        self.gamma= 1/t # Discount
+        
+        ## Take Action
+        ## Note new state
+        ## Get Reward and update Q_table
 
 

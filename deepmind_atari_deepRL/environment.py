@@ -1,11 +1,11 @@
-import sys
-sys.path.append("./gym")
+from agent import Agent
 import gym
+import universe
+
 atari = ["SpaceInvaders-v0"]
 env = gym.make(atari[0])
-
 actions = env.action_space
-#observation_space = env.observation_space
+observation_space = env.observation_space
 
 for i_episode in range(20):
     observation = env.reset() # First observation resets
