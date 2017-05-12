@@ -1,4 +1,4 @@
-# Optical Character Recognition
+# Optical Character Recognition using Expert Systems
 ---
 
 Here's the quick breakdown of what happens:
