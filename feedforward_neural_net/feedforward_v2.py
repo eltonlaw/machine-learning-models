@@ -1,3 +1,4 @@
+""" Feedforward neural net with python 3 and numpy"""
 import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_mldata
