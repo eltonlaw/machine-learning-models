@@ -19,9 +19,11 @@ Algorithm breakdown:
 
 ---------------------------------
 
-Here are the first 10 outputs of this script for one example:
+To get a better sense of how things work, here are the first 10 symbols as they go through the system:
 
-**2)** Original symbol seperated from contact sheet of sprites.
+**1)** Load image
+
+**2)** Symbols seperated into individual images (Optional - I was using sprites)
 
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/0_symbols/0.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/0_symbols/1.jpg?raw=true)
@@ -34,7 +36,7 @@ Here are the first 10 outputs of this script for one example:
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/0_symbols/8.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/0_symbols/9.jpg?raw=true)
 
-**3-1)** Horizontal Convolution using (1, 5) row vector of 0.2 as the filter
+**3-1)** Horizontal Convolution using a (5, 1) vector filled with 0.2 as the mask
 
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/1_convolution1/0.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/1_convolution1/1.jpg?raw=true)
@@ -47,7 +49,7 @@ Here are the first 10 outputs of this script for one example:
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/1_convolution1/8.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/1_convolution1/9.jpg?raw=true)
 
-**3-2)** Vertical Convolution using (1, 5) column vector of 0.2 as the filter
+**3-2)** Vertical Convolution using (1, 5) column vector filled with 0.2 as the mask
 
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/2_convolution2/0.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/2_convolution2/1.jpg?raw=true)
@@ -60,7 +62,7 @@ Here are the first 10 outputs of this script for one example:
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/2_convolution2/8.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/2_convolution2/9.jpg?raw=true)
 
-**3-3)** Otsu Thresholding and Scaled
+**3-3)** Binarize image using Otsu Thresholding and Scale to 32x32
 
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/3_scaled/0.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/3_scaled/1.jpg?raw=true)
@@ -73,8 +75,20 @@ Here are the first 10 outputs of this script for one example:
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/3_scaled/8.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/3_scaled/9.jpg?raw=true)
 
+**3-4)** Zhang-Suen Thinning 
 
-**3-4)** Canny Edge Detection
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/0.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/1.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/2.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/3.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/4.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/5.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/6.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/7.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/8.jpg?raw=true)
+![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/4_thinned/9.jpg?raw=true)
+
+**3-5)** Canny Edge Detection
 
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/5_edges/0.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/5_edges/1.jpg?raw=true)
@@ -87,14 +101,17 @@ Here are the first 10 outputs of this script for one example:
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/5_edges/8.jpg?raw=true)
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/5_edges/9.jpg?raw=true)
 
-**3-5)** 3 x 3 Feature Vector
+**3-6)** 3 x 3 Feature Vector
 
-_Only displaying the first one (cause it's pretty big), check [here](https://github.com/eltonlaw/ml_algorithms/tree/master/ocr/outputs/6_feature_vectors) to see the rest_
+_Only displaying the first one (cause the image is pretty big), check [here](https://github.com/eltonlaw/ml_algorithms/tree/master/ocr/outputs/6_feature_vectors) to see the rest_
 
 ![](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/outputs/6_feature_vectors/0.jpg?raw=true)
 
 
+
 ### Training
+
+At this point it might be good to check out the actual [source code](https://github.com/eltonlaw/ml_algorithms/blob/master/ocr/ocr.py)
 
 Training is really simple. Our feature descriptions are a placed into a python dictionary, one key for each label. Each key is initialized with an empty list.
 
@@ -122,7 +139,7 @@ The label with the feature vector closest to the new image is selected as the pr
 
 ### Closing Remarks
 
-Experts systems are an old technique and we can see that they perform poorly on handwritten digits. From a computational perspective, calculating pairwise euclidean distances is a nightmare. Additonally, this system does not account for translational invariance. As an example, if you look at (3-5), the 2 was not centered which could cause problems, say if we had another 2 but it was right justifed. However, I'd like to mention that this system managed to squeeze out 37.5% accuracy despite only 35 training images, which is less feasible with a statistical system. 
+Experts systems are an old technique and we can see that they perform poorly on handwritten digits. From a computational perspective, calculating pairwise euclidean distances is a nightmare. Additonally, this system does not account for translational invariance. As an example, if you look at (3-6), the 2 was not centered which could cause problems, say if we had another 2 but it was right justifed. However, I'd like to mention that this system managed to squeeze out 37.5% accuracy despite only 35 training images, which is less feasible with a statistical system. 
 
 ---
 
