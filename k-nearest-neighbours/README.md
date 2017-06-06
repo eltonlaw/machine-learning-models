@@ -2,7 +2,7 @@
 
 Hyperparameters
 
-* `nn`: Number of Neighbours (integer)
+* `nn`: Number of neighbours (integer), aka the number of datapoints that will be incorporated into each prediction 
 
 Broadly, this is how the algorithm works. For each test set datapoint, `x`...
 
