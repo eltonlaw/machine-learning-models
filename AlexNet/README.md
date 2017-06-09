@@ -63,11 +63,9 @@ img = np.rot90(img, k=3)
 ...
 ```
 
-Perfect. The labels correspond correctly and everything else looks fine. We can move on to the machine learning now.
-
 ![](https://github.com/eltonlaw/machine-learning-models/blob/master/AlexNet/images/data_preprocessing_3.png?raw=true)
 
-Perfect.
+Perfect. The labels correspond correctly and everything else looks fine. We can move on to the machine learning now.
 
 ### References
 
