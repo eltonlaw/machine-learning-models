@@ -2,6 +2,22 @@
 
 All models trained on the MNIST dataset.
 
+
+## Visualizing with Tensorboard
+
+Make a directory to hold the logs (by default every model is configured to save summaries and savepoints to `logs`), then run one of the scripts:
+
+    $ mkdir logs
+    $ python3 feedforward_tf.py
+
+Once the script has finished running, start up TensorBoard and direct it to the folder you saved all your stuff to:
+
+    $ tensorboard --logdir=./logs
+
+After a moment, TensorBoard should be availabel at localhost:6006
+
+
+
 ### 'feedforward_tf.py
 
 - Weights initialized using a truncated normal distribution - N(0, 1)
