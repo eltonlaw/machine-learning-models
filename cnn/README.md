@@ -1,3 +1,3 @@
-# Convolutional Neural Network
+# Convolutional Neural Networks
 
-* `cnn_a.py`: Wide, shallow convolutional neural network with overlapping pooling.
+* `cnn_a.py`: Wide, shallow cnn with overlapping pooling.
