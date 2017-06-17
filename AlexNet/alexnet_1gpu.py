@@ -8,7 +8,7 @@ dropout_p = 0.5
 momentum = 0.9
 weight_decay = 0.0005
 decay_rate = 0.95
-decay_steps = 1000
+decay_steps = 100000
 
 
 def conv_layer(X, K_n, strides, B_init=1):
