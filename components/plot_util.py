@@ -18,4 +18,9 @@ def plot_img_before_after(image1, image2, filename="out.png", cmap="gray"):
     ax2.set_xticklabels([])
     ax2.set_yticklabels([])
     ax2.axis('off')
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches='tight', transparent=True, pad_inches=0)
+
+
+def plot_n_images(image_dict):
+    """ Plot a variable amount of images """
+    pass
