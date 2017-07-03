@@ -1,4 +1,5 @@
 from PIL import Image
+import matplotlib.image as mpimg
 import numpy as np
 from scipy.ndimage.filters import convolve
 from scipy.ndimage.filters import correlate
@@ -26,24 +27,35 @@ def _normalize(img, new_max, new_min):
     return new_img
 
 
-def normalized_correlation1(image, kernel):
+def _get_max_indices(arr, n):
+    flat = arr.flatten()
+    indices = np.argsort(flat)[::-1][:n]
+    indices_unraveled = np.unravel_index(indices, arr.shape, order="F")
+    out = np.transpose(indices_unraveled)
+    return out
+
+
+def normalized_correlation(image, kernel):
     # Normalize
-    image_norm = _normalize(image, 255, -255)
-    np.min(image_norm)
-    np.max(image_norm)
+    image_norm = _normalize(image, 1.5, -1.5)
     correlated = correlate(image_norm, kernel)
-    np.min(correlated)
+    # max_indices = _get_max_indices(correlated, 6)
+    # ks = [int((kernel.shape[0]-1)/2), int((kernel.shape[1]-1)/2)]
+    # for x, y in max_indices:
+    #     correlated[x-ks[0]:x+ks[0], y-ks[1]:y+ks[1]] = 0
+    #     correlated[x, y] = 255
+    correlated = correlated.astype(np.uint8)
     return correlated
 
 
 if __name__ == "__main__":
     __FILEPATH__ = "Valve_bw.PNG"
-    image = np.array(Image.open(__FILEPATH__))
-
+    image = mpimg.imread(__FILEPATH__)
+    imsave("./images/original.png", image)
     sobel_image = sobel_feldman(image)
-    imsave("sobel_feldman_operator.png", sobel_image)
+    imsave("./images/sobel_feldman_operator.png", sobel_image)
 
     screws_kernel = image[57: 70, 68:80]
-    imsave("normalized_correlation_kernel.png", screws_kernel)
-    nc_image = normalized_correlation1(image, screws_kernel)
-    imsave("normalized_correlation.png", nc_image)
+    imsave("./images/normalized_correlation_kernel.png", screws_kernel)
+    nc_image = normalized_correlation(image, screws_kernel)
+    imsave("./images/normalized_correlation.png", nc_image)
