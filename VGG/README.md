@@ -30,11 +30,13 @@ I set the default parameters as the ones used in the paper but if you want to us
 		
 ### About this Implementation
 
-#### Data Preprocessing
+Note: The original paper was performed on scaled-down ImageNet images (following the AlexNet architecture), so I rescaled each image to (224,224,3) so things would run correctly.
+
+#### Accessing the Data
 
 The dataset used is CIFAR-10, which consists of 60 000 32x32 RGB images in 10 classes: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck. 
 
-To access this dataset in python, you have to unpickle it, after which you will have a 10 000 x 3072 numpy array. Notice that the images have been flattened into a 1D 3072 vector. The standard format for images is 32x32x3 so I reshaped each 1D vector and plotted it.  
+After unpickling, you get a 10,000 x 3072 numpy array. The images have been flattened into a 1D 3072 vector. The standard format for images is 32x32x3 so I reshaped each 1D vector and plotted it.  
 
 ```python3
 ...
@@ -44,7 +46,7 @@ img = np.reshape(img, [32, 32, 3])
 
 ![](https://github.com/eltonlaw/machine-learning-models/blob/master/VGG/images/data_preprocessing_1.png?raw=true)
 
-Okay, no clue why the data is tiled, but luckily someone on [StackOverflow knows](https://stackoverflow.com/questions/28005669/how-to-view-an-rgb-image-with-pylab). Basically, it has to do with the order in which the data is reshaped. The default for a numpy reshape is `C` which means to read/write elements in C-like index order. The StackOverflow post states that a Fortran-like index order will solve the problem.
+The data is tiled, but luckily someone on [StackOverflow knows](https://stackoverflow.com/questions/28005669/how-to-view-an-rgb-image-with-pylab). Basically, it has to do with the order in which the data is reshaped. The default for a numpy reshape is `C` which means to read/write elements in C-like index order. Using a Fortran-like index order, `F` will solve the problem.
 
 ```python3
 ...
@@ -66,6 +68,14 @@ img = np.rot90(img, k=3)
 ![](https://github.com/eltonlaw/machine-learning-models/blob/master/VGG/images/data_preprocessing_3.png?raw=true)
 
 Perfect. The labels correspond correctly and everything else looks fine. We can move on to the machine learning now.
+
+#### Data Preprocessing
+
+Data preprocessing consists of just a standardization step. 
+
+> "The only pre- processing we do is subtracting the mean RGB value, computed on the training set, from each pixel."
+
+
 
 ### References
 

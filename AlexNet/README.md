@@ -8,7 +8,6 @@ Implementation in TensorFlow of the paper "ImageNet Classification with Deep Con
 
 ![](https://github.com/eltonlaw/machine-learning-models/blob/master/AlexNet/images/architecture.png?raw=true)
 
-
 (from the paper (Krizhevsky et. al, 2012) [3])
 
 * 5 Convolutional Layers, 3 Convolutional Layers
