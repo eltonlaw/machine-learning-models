@@ -20,6 +20,7 @@ class LinearRegression:
     def __init__(self):
         self.fitted = False
 
+    # pylint:disable=too-many-arguments,too-many-locals
     def fit(self, X, y, batch_size=1, lr=0.001, epochs=100):
         """ Learn linear mapping from X (some data) to y (some label)
 
@@ -34,7 +35,7 @@ class LinearRegression:
         batch_size : int, optional, default 1
             The number of data points used in each update of the weights.
             Keep in mind that `batch_size` must be divisible by the number
-            of data points. 
+            of data points.
         lr : float, optional, default 0.001
             Learning rate/alpha, the percentage of the gradient that gets
             subtracted from the weights.
@@ -48,8 +49,8 @@ class LinearRegression:
         """
         n_data, n_features = np.shape(X)
         # Number of data points must be divisable by batch size
-        assert (n_data % batch_size == 0)
-        n_batches = n_data//batch_size 
+        assert n_data % batch_size == 0
+        n_batches = n_data//batch_size
 
         weights = np.random.standard_normal((n_features))
         for _ in range(epochs):
@@ -59,9 +60,10 @@ class LinearRegression:
                             y[i*batch_size:(i+1)*batch_size]]
                 # Use weights to get prediction
                 y_hat = np.shape(np.matmul(x_i, weights))
-                loss_derivative = np.matmul((y_hat - y_i),x_i)
+                loss_derivative = np.matmul((y_hat - y_i), x_i)
                 # Update weights
-                weights = weights - (lr * loss_derivative)        
+                weights = weights - (lr * loss_derivative)
+        # pylint: disable=attribute-defined-outside-init
         self.weights = weights
         self.fitted = True
 
@@ -86,6 +88,7 @@ class LinearRegression:
         return y_hat
 
 def test_run(dataset_name):
+    """ Test to see that it works """
     from sklearn.metrics import mean_squared_error
     from sklearn.metrics import explained_variance_score
     from sklearn import datasets
@@ -107,4 +110,3 @@ def test_run(dataset_name):
 if __name__ == "__main__":
     test_run("boston")
     # test_run("linnerud")
-
