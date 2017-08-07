@@ -1,4 +1,7 @@
-""" Ordinary Least Squares Regression with Minibatch Gradient Descent """
+"""
+Ordinary Least Squares Regression with Minibatch Gradient Descent and
+in closed form (using projections)
+"""
 import numpy as np
 
 # pylint: disable=invalid-name
@@ -8,8 +11,11 @@ class LinearRegression:
 
     Attributes
     ----------
-    normalize: boolean, optional, default True
+    normalized: boolean, optional, default True
         Normalize data
+    method: str
+        Optimization method, options are 'gd' (for Gradient Descent)
+        and 'cf (for Closed Form)'
 
     Methods
     -------
@@ -19,13 +25,17 @@ class LinearRegression:
         Use previously learning mapping on novel data, X
 
     """
-    def __init__(self, normalized=True):
+    def __init__(self, normalized=True, method="gd"):
+        self.method = method
         self.fitted = False
         self.normalized = normalized
 
     # pylint:disable=too-many-arguments,too-many-locals
     def fit(self, X, y, batch_size=1, lr=0.0001, epochs=100):
         """ Learn linear mapping from X (some data) to y (some label)
+
+        The hyperparameters `batch_size`, `lr` and `epochs` are only needed
+        if using the method 'gd' (Gradient Descent).
 
         Parameters
         ----------
@@ -44,33 +54,38 @@ class LinearRegression:
             subtracted from the weights.
         epochs : int, optional, default 100
             Number of times entire training set is looped over
-
         Returns
         ------
         None
 
         """
-        if self.normalized:
-            X = _normalize(X)
+        if self.method == "gd":
+            n_data, n_features = np.shape(X)
+            # Number of data points must be divisable by batch size
+            assert n_data % batch_size == 0
+            n_batches = n_data//batch_size
+            if self.normalized:
+                X = _normalize(X)
 
-        n_data, n_features = np.shape(X)
-        # Number of data points must be divisable by batch size
-        assert n_data % batch_size == 0
-        n_batches = n_data//batch_size
+            weights = np.random.standard_normal((n_features+1))
+            for _ in range(epochs):
+                for i in range(n_batches):
+                    # Get the next batch of training data
+                    x_i, y_i = [X[i*batch_size:(i+1)*batch_size],
+                                y[i*batch_size:(i+1)*batch_size]]
+                    # Add 1 to the beginning for the intercept
+                    x_i = np.insert(x_i, 0, 1)
+                    # Use weights to get prediction
+                    y_hat = [np.matmul(x_i, weights)]
+                    loss_derivative = (y_hat - y_i)*x_i
+                    # Update weights
+                    weights = weights - (lr * loss_derivative)
+        elif self.method == "cf":
+            if self.normalized:
+                X = _normalize(X)
+            # pylint: disable=line-too-long
+            weights = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, X)), X.T), y)
 
-        weights = np.random.standard_normal((n_features+1))
-        for _ in range(epochs):
-            for i in range(n_batches):
-                # Get the next batch of training data
-                x_i, y_i = [X[i*batch_size:(i+1)*batch_size],
-                            y[i*batch_size:(i+1)*batch_size]]
-                # Add 1 to the beginning for the intercept
-                x_i = np.insert(x_i, 0, 1)
-                # Use weights to get prediction
-                y_hat = [np.matmul(x_i, weights)]
-                loss_derivative = (y_hat - y_i)*x_i
-                # Update weights
-                weights = weights - (lr * loss_derivative)
         # pylint: disable=attribute-defined-outside-init
         self.weights = weights
         self.fitted = True
@@ -95,17 +110,20 @@ class LinearRegression:
         assert self.fitted
         if self.normalized:
             X = _normalize(X)
-        X = np.insert(X, 0, 1, axis=1)
+        if self.method == "gd":
+            X = np.insert(X, 0, 1, axis=1)
         y_hat = np.matmul(X, self.weights)
         return y_hat
 
-def _normalize(v):
-    norm = np.linalg.norm(v)
-    if norm == 0:
-        return v
-    return v/norm
+def _normalize(vector):
+    norm = np.linalg.norm(vector)
+    if norm != 0:
+        out = vector/norm
+    else:
+        out = vector
+    return out
 
-def test_run(dataset_name):
+def test_run(dataset_name, method):
     """ Run the model on a toy dataset """
     from sklearn.metrics import mean_squared_error
     from sklearn.metrics import explained_variance_score
@@ -115,16 +133,17 @@ def test_run(dataset_name):
     X_train, X_test, y_train, y_test = train_test_split(ds.data,
                                                         ds.target,
                                                         test_size=0.3)
-    model = LinearRegression()
+    model = LinearRegression(method=method)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
     print("="*79)
-    print(dataset_name.upper())
+    print("{}-{}".format(dataset_name.upper(), method))
     print("Weights:", model.weights)
     print("MSE:", mean_squared_error(predictions, y_test))
     print("EV:", explained_variance_score(predictions, y_test))
 
 
 if __name__ == "__main__":
-    test_run("boston")
+    test_run("boston", method="gd")
+    test_run("boston", method="cf")
     # _test_run("linnerud")
