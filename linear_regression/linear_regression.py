@@ -8,6 +8,8 @@ class LinearRegression:
 
     Attributes
     ----------
+    normalize: boolean, optional, default True
+        Normalize data
 
     Methods
     -------
@@ -17,11 +19,12 @@ class LinearRegression:
         Use previously learning mapping on novel data, X
 
     """
-    def __init__(self):
+    def __init__(self, normalized=True):
         self.fitted = False
+        self.normalized = normalized
 
     # pylint:disable=too-many-arguments,too-many-locals
-    def fit(self, X, y, batch_size=1, lr=0.001, epochs=100):
+    def fit(self, X, y, batch_size=1, lr=0.0001, epochs=100):
         """ Learn linear mapping from X (some data) to y (some label)
 
         Parameters
@@ -47,20 +50,25 @@ class LinearRegression:
         None
 
         """
+        if self.normalized:
+            X = _normalize(X)
+
         n_data, n_features = np.shape(X)
         # Number of data points must be divisable by batch size
         assert n_data % batch_size == 0
         n_batches = n_data//batch_size
 
-        weights = np.random.standard_normal((n_features))
+        weights = np.random.standard_normal((n_features+1))
         for _ in range(epochs):
             for i in range(n_batches):
                 # Get the next batch of training data
                 x_i, y_i = [X[i*batch_size:(i+1)*batch_size],
                             y[i*batch_size:(i+1)*batch_size]]
+                # Add 1 to the beginning for the intercept
+                x_i = np.insert(x_i, 0, 1)
                 # Use weights to get prediction
-                y_hat = np.shape(np.matmul(x_i, weights))
-                loss_derivative = np.matmul((y_hat - y_i), x_i)
+                y_hat = [np.matmul(x_i, weights)]
+                loss_derivative = (y_hat - y_i)*x_i
                 # Update weights
                 weights = weights - (lr * loss_derivative)
         # pylint: disable=attribute-defined-outside-init
@@ -82,13 +90,23 @@ class LinearRegression:
             Vector of predictions for `X`, each element corresponds with
             one of the rows in `X`. (Ex. y_[i] is the predicted label for
             X[i])
+
         """
         assert self.fitted
+        if self.normalized:
+            X = _normalize(X)
+        X = np.insert(X, 0, 1, axis=1)
         y_hat = np.matmul(X, self.weights)
         return y_hat
 
+def _normalize(v):
+    norm = np.linalg.norm(v)
+    if norm == 0:
+        return v
+    return v/norm
+
 def test_run(dataset_name):
-    """ Test to see that it works """
+    """ Run the model on a toy dataset """
     from sklearn.metrics import mean_squared_error
     from sklearn.metrics import explained_variance_score
     from sklearn import datasets
@@ -109,4 +127,4 @@ def test_run(dataset_name):
 
 if __name__ == "__main__":
     test_run("boston")
-    # test_run("linnerud")
+    # _test_run("linnerud")
