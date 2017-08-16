@@ -79,8 +79,8 @@ class LogisticRegression:
         Z = sigmoid(np.matmul(data, self.W) + self.B)
         # Derivative of cost with respect to output
         d_z = Z - labels
-        self.W += (1/n_x)*np.matmul(data.T, d_z)
-        self.B += (1/n_x)*np.sum(d_z, axis=0)
+        self.W -= (1/n_x)*np.matmul(data.T, d_z)
+        self.B -= (1/n_x)*np.sum(d_z, axis=0)
 
 
     def predict(self, data):
