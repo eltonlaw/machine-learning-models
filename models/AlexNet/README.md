@@ -6,7 +6,7 @@ Implementation in TensorFlow of the paper "ImageNet Classification with Deep Con
 
 **NOTE:** I've tried to stay as true to the paper as possible but have still slightly modified the original implementation of AlexNet. The original implementation was trained by evenly splitting parameters onto two NVIDIA GTX 580 3GB GPUs and communication only occured in some layers. Specifically, all the kernel maps in layer 2 were used for layer 3, but the kernel maps used for layer 1->2, 3->4, 4->5 only used kernel maps from parameters on the same GPU. In this implementation, I didn't seperate the layers, so each convolutional layers volume is doubled. The likely implication of this decision is increased overfitting. Also modified is the learning rate decay, instead of a piecewise conditional learning rate decay by a factor of 10 everytime the validation error stops decreasing I used a more gradual decay: inverse time_decay with a decay rate of 0.95 every 100 0000 steps.
 
-![](https://github.com/eltonlaw/machine-learning-models/blob/master/AlexNet/images/architecture.png?raw=true)
+![](https://github.com/eltonlaw/machine_learning/blob/master/models/AlexNet/images/architecture.png?raw=true)
 
 (from the paper (Krizhevsky et. al, 2012) [3])
 

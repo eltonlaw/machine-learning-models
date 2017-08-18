@@ -6,19 +6,19 @@ Implementations from scratch (if numpy counts as scratch as well as the occaison
 
 1. Clone the repo:
 	
-		$ git clone https://github.com/eltonlaw/machine-learning-models.git
+		$ git clone https://github.com/eltonlaw/machine_learning.git
 
 2. To satisfy dependencies, run the following:
 
-		$ virtualenv ~/machine-learning
-		$ source ~/machine-learning/activate
+		$ virtualenv ~/machine_learning
+		$ source ~/machine_learning/activate
 		$ pip3 install -r requirements.txt
 
 3. And for a quick sanity check:
 
 		$ python3 -m unittest discover 
 
-4. If you're having any trouble, [submit an issue](https://github.com/eltonlaw/machine-learning-models/issues).
+4. If you're having any trouble, [submit an issue](https://github.com/eltonlaw/machine_learning/issues).
 
 <!-- Accuracy Scores (Setup a table showing top-1, top-5 errors etc. for each implemented model)-->
 
