@@ -13,9 +13,12 @@ from sklearn.datasets import load_iris
 # pylint: disable=invalid-name, no-member, missing-docstring
 
 def pca(data, r=2):
-    """ Compress input data into lower dimension """
+    """ Eigendecomposition of the covariance matrix """
+    # Calculate covariance matrix/make it symmetric
     cov = np.matmul(data.T, data)
+    # Find the eigenvectors of the covariance matrix
     _, eigvec = np.linalg.eig(cov)
+    # Use `r` truncated eigenvectors to get truncated representation
     return np.matmul(data, eigvec[:r].T)
 
 
