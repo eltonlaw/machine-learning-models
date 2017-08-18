@@ -2,7 +2,7 @@
 
 
 
-![](https://github.com/eltonlaw/machine_learning/blob/master/models/pca/images/output.png?raw=true)
+![](https://github.com/eltonlaw/machine_learning/blob/master/models/pca/images/pca.png?raw=true)
 
 References:
 
