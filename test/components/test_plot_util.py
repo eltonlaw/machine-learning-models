@@ -15,6 +15,12 @@ class TestPlotUtil(unittest.TestCase):
     """
     def setUp(self):
         self.img = np.random.randn(100, 100)
+        self.path = "test_output.png"
+
+    def tearDown(self):
+        # Delete generated image
+        if self.path in os.listdir():
+            os.remove(self.path)
 
     def test_plot_added(self):
         plt = Plotter()
@@ -25,9 +31,8 @@ class TestPlotUtil(unittest.TestCase):
         plt = Plotter()
         for i in range(15):
             plt.add_to_plot(self.img, "image-{}".format(i))
-        plt.save_plot("test_output.png")
-        self.assertTrue("test_output.png" in os.listdir())
-        os.remove("test_output.png")
+        plt.save_plot(self.path)
+        self.assertTrue(self.path in os.listdir())
 
 if __name__ == "__main__":
     unittest.main()
